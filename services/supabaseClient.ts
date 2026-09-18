@@ -1,6 +1,13 @@
-import 'react-native-url-polyfill/auto';
+import { Platform } from 'react-native';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// El polyfill de URL/fetch es necesario en nativo (Hermes no trae uno completo),
+// pero en web rompe el `fetch` propio del navegador — provoca el error "Failed to
+// execute 'fetch'... String contains non ISO-8859-1 code point" al loguearse.
+if (Platform.OS !== 'web') {
+  require('react-native-url-polyfill/auto');
+}
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;

@@ -32,7 +32,7 @@ export function MainTabs() {
       })}
     >
       <Tab.Screen name="Portfolio" component={PortfolioScreen} options={{ title: 'Portafolio' }} />
-      <Tab.Screen name="Catalog" component={StockCatalogScreen} options={{ title: 'Catálogo' }} />
+      <Tab.Screen name="Catalog" component={StockCatalogScreen} options={{ title: 'Ingresos y gastos extras' }} />
       <Tab.Screen name="History" component={TransactionHistoryScreen} options={{ title: 'Historial' }} />
       <Tab.Screen name="Gains" component={GainsScreen} options={{ title: 'Balance mensual' }} />
       <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Ajustes' }} />

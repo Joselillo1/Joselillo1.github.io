@@ -39,21 +39,31 @@ export function StockCatalogScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
-      <Text style={[styles.title, { color: theme.text }]}>Catálogo</Text>
+      <Text style={[styles.title, { color: theme.text }]}>Ingresos y gastos extras</Text>
 
       <View style={styles.quickRow}>
         <Pressable
           onPress={() => navigation.navigate('Income')}
           style={[styles.quickCard, { backgroundColor: theme.card, borderColor: theme.border }]}
         >
-          <Text style={[styles.quickLabel, { color: theme.textMuted }]}>Ingresos</Text>
+          <View style={styles.quickCardHeader}>
+            <Text style={[styles.quickLabel, { color: theme.textMuted }]}>Ingresos</Text>
+            <View style={[styles.quickBadge, { backgroundColor: theme.positive }]}>
+              <Text style={styles.quickBadgeText}>+</Text>
+            </View>
+          </View>
           <Text style={[styles.quickValue, { color: theme.positive }]}>+{formatCurrency(totalIncome)}</Text>
         </Pressable>
         <Pressable
           onPress={() => navigation.navigate('Expenses')}
           style={[styles.quickCard, { backgroundColor: theme.card, borderColor: theme.border }]}
         >
-          <Text style={[styles.quickLabel, { color: theme.textMuted }]}>Gastos extras</Text>
+          <View style={styles.quickCardHeader}>
+            <Text style={[styles.quickLabel, { color: theme.textMuted }]}>Gastos extras</Text>
+            <View style={[styles.quickBadge, { backgroundColor: theme.negative }]}>
+              <Text style={styles.quickBadgeText}>−</Text>
+            </View>
+          </View>
           <Text style={[styles.quickValue, { color: theme.negative }]}>−{formatCurrency(totalExpenses)}</Text>
         </Pressable>
       </View>
@@ -97,7 +107,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', marginBottom: 12 },
   quickRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   quickCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 12 },
-  quickLabel: { fontSize: 12, marginBottom: 4 },
+  quickCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  quickLabel: { fontSize: 12 },
+  quickBadge: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  quickBadgeText: { color: '#fff', fontSize: 14, fontWeight: '800', lineHeight: 16 },
   quickValue: { fontSize: 16, fontWeight: '800' },
   search: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, marginBottom: 8 },
   list: { flex: 1 },

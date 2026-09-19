@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Decimal from 'decimal.js';
 import { settingsService } from '../services/settingsService';
 import { backupService } from '../services/backupService';
 import { monthlyReportService } from '../services/monthlyReportService';
@@ -11,7 +10,6 @@ import { useAuth } from '../hooks/useAuth';
 import { useTransactionsStore } from '../hooks/useTransactionsStore';
 import { useExpensesStore } from '../hooks/useExpensesStore';
 import { useIncomeStore } from '../hooks/useIncomeStore';
-import { formatCurrency } from '../services/format';
 import { useTheme } from '../components/theme';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../components/Shared/Buttons';
 import { useActionSheet } from '../components/Shared/ActionSheet';
@@ -27,12 +25,12 @@ const GRACE_PERIOD_OPTIONS: { label: string; ms: number }[] = [
   { label: '15 min', ms: 15 * 60_000 },
 ];
 
-export function SettingsScreen({ navigation }: Props) {
+export function SettingsScreen({}: Props) {
   const theme = useTheme();
   const { session } = useAuth();
   const { transactions, refresh } = useTransactionsStore();
-  const { expenses, refresh: refreshExpenses } = useExpensesStore();
-  const { income, refresh: refreshIncome } = useIncomeStore();
+  const { refresh: refreshExpenses } = useExpensesStore();
+  const { refresh: refreshIncome } = useIncomeStore();
   const { showActionSheet, showAlert } = useActionSheet();
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [gracePeriodMs, setGracePeriodMs] = useState<number>(5 * 60_000);
@@ -210,38 +208,6 @@ export function SettingsScreen({ navigation }: Props) {
           </View>
         </View>
       )}
-
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Gastos extra</Text>
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.rowTitle, { color: theme.text }]}>Cuota del banco, del broker, noticias…</Text>
-            <Text style={[styles.rowSubtitle, { color: theme.textMuted }]}>
-              Costos de mantener tu operación de inversión, aparte de las compras/ventas.
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.rowTitle, { color: theme.negative, marginTop: 10, marginBottom: 12 }]}>
-          −{formatCurrency(expenses.reduce((sum, e) => sum.plus(e.amount), new Decimal(0)))} acumulado
-        </Text>
-        <SecondaryButton label="Ver y administrar gastos" onPress={() => navigation.navigate('Expenses')} />
-      </View>
-
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>Ingresos</Text>
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <View style={styles.row}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.rowTitle, { color: theme.text }]}>Dividendos, intereses…</Text>
-            <Text style={[styles.rowSubtitle, { color: theme.textMuted }]}>
-              Dinero recibido que no viene de vender una posición.
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.rowTitle, { color: theme.positive, marginTop: 10, marginBottom: 12 }]}>
-          +{formatCurrency(income.reduce((sum, i) => sum.plus(i.amount), new Decimal(0)))} acumulado
-        </Text>
-        <SecondaryButton label="Ver y administrar ingresos" onPress={() => navigation.navigate('Income')} />
-      </View>
 
       <Text style={[styles.sectionTitle, { color: theme.text }]}>Reporte mensual</Text>
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>

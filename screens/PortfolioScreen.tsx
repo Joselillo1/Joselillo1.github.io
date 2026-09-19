@@ -151,20 +151,28 @@ export function PortfolioScreen({ navigation }: Props) {
             </View>
 
             <View style={styles.sortRow}>
-              {(['invertido', 'ganancia', 'nombre'] as SortKey[]).map((key) => (
-                <Pressable
-                  key={key}
-                  onPress={() => setSortKey(key)}
-                  style={[
-                    styles.sortChip,
-                    { borderColor: theme.border, backgroundColor: sortKey === key ? theme.primary : 'transparent' },
-                  ]}
-                >
-                  <Text style={{ color: sortKey === key ? '#fff' : theme.textMuted, fontSize: 12, fontWeight: '600' }}>
-                    {key === 'invertido' ? 'Monto invertido' : key === 'ganancia' ? '% ganancia' : 'Nombre'}
-                  </Text>
-                </Pressable>
-              ))}
+              <View style={styles.sortChips}>
+                {(['invertido', 'ganancia', 'nombre'] as SortKey[]).map((key) => (
+                  <Pressable
+                    key={key}
+                    onPress={() => setSortKey(key)}
+                    style={[
+                      styles.sortChip,
+                      { borderColor: theme.border, backgroundColor: sortKey === key ? theme.primary : 'transparent' },
+                    ]}
+                  >
+                    <Text style={{ color: sortKey === key ? '#fff' : theme.textMuted, fontSize: 12, fontWeight: '600' }}>
+                      {key === 'invertido' ? 'Monto invertido' : key === 'ganancia' ? '% ganancia' : 'Nombre'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Pressable
+                onPress={() => navigation.navigate('Catalog', { autoFocus: true })}
+                style={[styles.searchButton, { borderColor: theme.border, backgroundColor: theme.card }]}
+              >
+                <Text style={styles.searchIcon}>🔎</Text>
+              </Pressable>
             </View>
           </>
         }
@@ -212,7 +220,17 @@ const styles = StyleSheet.create({
   },
   pnlTotalLabel: { fontSize: 13, fontWeight: '800' },
   pnlTotalValue: { fontSize: 18, fontWeight: '800' },
-  sortRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  sortRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  sortChips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   sortChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
+  searchButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchIcon: { fontSize: 15 },
   empty: { textAlign: 'center', marginTop: 40, fontSize: 14, lineHeight: 20 },
 });

@@ -60,6 +60,10 @@ export function PortfolioScreen({ navigation }: Props) {
     .plus(portfolio.totalUnrealizedPnL ?? 0)
     .plus(totalIncome)
     .minus(totalExtraExpenses);
+  // % ganado sobre lo comprado en total, con el mismo total neto que se muestra abajo.
+  const pnlNetPercentage = portfolio.totalBuysCost.greaterThan(0)
+    ? pnlNet.dividedBy(portfolio.totalBuysCost).times(100)
+    : undefined;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
@@ -111,15 +115,17 @@ export function PortfolioScreen({ navigation }: Props) {
                   <Text style={[styles.pnlTotalLabel, { color: theme.text }]}>Total neto</Text>
                   <CurrencyText value={pnlNet} signed style={styles.pnlTotalValue} />
                 </View>
+                {pnlNetPercentage !== undefined && (
+                  <View style={styles.pnlLine}>
+                    <Text style={[styles.summaryLabel, { color: theme.textMuted, marginBottom: 0 }]}>
+                      Rentabilidad (% ganado)
+                    </Text>
+                    <PercentageText value={pnlNetPercentage} signed style={styles.pnlValue} />
+                  </View>
+                )}
               </View>
 
               <View style={styles.summaryRow}>
-                {portfolio.totalReturnPercentage !== undefined && (
-                  <View>
-                    <Text style={[styles.summaryLabel, { color: theme.textMuted }]}>Rentabilidad</Text>
-                    <PercentageText value={portfolio.totalReturnPercentage} signed style={styles.summarySecondary} />
-                  </View>
-                )}
                 <View>
                   <Text style={[styles.summaryLabel, { color: theme.textMuted }]}>Hoy</Text>
                   {todayPnL !== undefined ? (

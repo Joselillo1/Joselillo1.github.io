@@ -375,6 +375,7 @@ export function computePortfolioSummary(positions: PositionSummary[]): Portfolio
     totalRealizedFees,
     totalUnrealizedPnL,
     totalReturnPercentage,
+    totalBuysCost,
     totalFees,
     positions,
   };

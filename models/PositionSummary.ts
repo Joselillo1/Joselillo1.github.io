@@ -48,6 +48,8 @@ export interface PortfolioSummary {
   totalRealizedFees: Decimal;
   totalUnrealizedPnL?: Decimal;
   totalReturnPercentage?: Decimal;
+  /** Total invertido en compras (base para calcular el % de rentabilidad neta). */
+  totalBuysCost: Decimal;
   /** Comisiones totales pagadas en todo el portafolio (abiertas y cerradas; ya descontadas de las ganancias). */
   totalFees: Decimal;
   positions: PositionSummary[];

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import Decimal from 'decimal.js';
-import { MonthlyRealizedPnL, computeMonthlyRealizedPnL, computePeakInvested } from '../services/portfolioCalculations';
+import { MonthlyRealizedPnL, computeMonthlyRealizedPnL } from '../services/portfolioCalculations';
+import { INITIAL_CAPITAL } from '../services/investmentConfig';
 import { useTransactionsStore } from './useTransactionsStore';
 import { useExpensesStore } from './useExpensesStore';
 import { useIncomeStore } from './useIncomeStore';
@@ -14,7 +15,7 @@ function monthKey(year: number, month: number): string {
 export interface MonthlyBalance extends MonthlyRealizedPnL {
   /** Ingresos (dividendos, intereses, etc.) recibidos ese mes. */
   income: Decimal;
-  /** Neto del mes ÷ base del mes: lo que ya estaba invertido al cerrar el mes anterior, o el máximo invertido dentro del mes si fue mayor × 100 (undefined si aún no había compras). */
+  /** Neto del mes ÷ (capital inicial + neto acumulado de los meses anteriores) × 100. */
   netPercentage?: Decimal;
 }
 
@@ -66,7 +67,9 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
       registerKey(d.getFullYear(), d.getMonth());
     }
 
-    const months: MonthlyBalance[] = Array.from(keyMeta.entries()).map(([key, { year, month }]) => {
+    const ordered = Array.from(keyMeta.entries()).sort(([, a], [, b]) => a.year - b.year || a.month - b.month);
+    let base = INITIAL_CAPITAL;
+    const months: MonthlyBalance[] = ordered.map(([key, { year, month }]) => {
       const trading = tradingByKey.get(key);
       const gains = trading?.gains ?? ZERO;
       const losses = trading?.losses ?? ZERO;
@@ -75,9 +78,8 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
       const monthIncome = incomeByKey.get(key) ?? ZERO;
       const fees = realizedFees.plus(extraExpenses);
       const net = gains.plus(losses).minus(fees).plus(monthIncome);
-      const monthEnd = new Date(year, month + 1, 1);
-      const boughtSoFar = computePeakInvested(transactions, monthEnd, new Date(year, month, 1));
-      const netPercentage = boughtSoFar.greaterThan(0) ? net.dividedBy(boughtSoFar).times(100) : undefined;
+      const netPercentage = net.dividedBy(base).times(100);
+      base = base.plus(net);
       return { year, month, gains, losses, fees, income: monthIncome, net, netPercentage };
     });
 

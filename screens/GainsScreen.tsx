@@ -1,11 +1,12 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Decimal from 'decimal.js';
 import { useMonthlyGains } from '../hooks/useMonthlyGains';
 import { GainsBarChart } from '../components/Gains/GainsBarChart';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
-import { INITIAL_CAPITAL } from '../services/investmentConfig';
+import { useCapitalStore } from '../hooks/useCapitalStore';
 import { formatCurrency, formatMonthYear } from '../services/format';
 import { useTheme } from '../components/theme';
 
@@ -14,11 +15,13 @@ const ZERO = new Decimal(0);
 export function GainsScreen() {
   const theme = useTheme();
   const { months } = useMonthlyGains();
+  const { totalCapital } = useCapitalStore();
+  const navigation = useNavigation<any>();
 
   const current = months[months.length - 1];
   const previous = months[months.length - 2];
   const accumulatedNet = months.reduce((sum, m) => sum.plus(m.net), ZERO);
-  const totalBought = INITIAL_CAPITAL;
+  const totalBought = totalCapital;
   const accumulatedPct = totalBought.greaterThan(0) ? accumulatedNet.dividedBy(totalBought).times(100) : undefined;
 
   // Del más reciente al más antiguo, como máximo 6 meses en el detalle.
@@ -56,12 +59,18 @@ export function GainsScreen() {
               )}
               {totalBought.greaterThan(0) && (
                 <Text style={[styles.monthPct, { color: theme.textMuted, fontWeight: '400' }]}>
-                  sobre {formatCurrency(totalBought)} (capital inicial)
+                  sobre {formatCurrency(totalBought)} (capital)
                 </Text>
               )}
             </View>
           </View>
         </View>
+
+        <Pressable onPress={() => navigation.navigate('Capital')} style={styles.capitalLink}>
+          <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>
+            Capital y aportes — agregar dinero a la base →
+          </Text>
+        </Pressable>
 
         <GainsBarChart months={months} />
         <View style={styles.legend}>
@@ -125,6 +134,7 @@ export function GainsScreen() {
 }
 
 const styles = StyleSheet.create({
+  capitalLink: { paddingVertical: 10, marginBottom: 4 },
   monthPct: { fontSize: 12, fontWeight: '600', marginTop: 2 },
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 48 },

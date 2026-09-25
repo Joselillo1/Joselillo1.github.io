@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import Decimal from 'decimal.js';
 import { MonthlyRealizedPnL, computeMonthlyRealizedPnL } from '../services/portfolioCalculations';
 import { INITIAL_CAPITAL } from '../services/investmentConfig';
+import { useCapitalStore } from './useCapitalStore';
 import { useTransactionsStore } from './useTransactionsStore';
 import { useExpensesStore } from './useExpensesStore';
 import { useIncomeStore } from './useIncomeStore';
@@ -15,7 +16,7 @@ function monthKey(year: number, month: number): string {
 export interface MonthlyBalance extends MonthlyRealizedPnL {
   /** Ingresos (dividendos, intereses, etc.) recibidos ese mes. */
   income: Decimal;
-  /** Neto del mes ÷ (capital inicial + neto acumulado de los meses anteriores) × 100. */
+  /** Neto del mes ÷ (capital inicial + aportes hasta ese mes + neto acumulado de los meses anteriores) × 100. */
   netPercentage?: Decimal;
 }
 
@@ -33,6 +34,7 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
   const { transactions, loading: loadingTransactions } = useTransactionsStore();
   const { expenses, loading: loadingExpenses } = useExpensesStore();
   const { income, loading: loadingIncome } = useIncomeStore();
+  const { deposits } = useCapitalStore();
 
   const months = useMemo(() => {
     const tradingByKey = new Map<string, MonthlyRealizedPnL>();
@@ -78,13 +80,15 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
       const monthIncome = incomeByKey.get(key) ?? ZERO;
       const fees = realizedFees.plus(extraExpenses);
       const net = gains.plus(losses).minus(fees).plus(monthIncome);
-      const netPercentage = net.dividedBy(base).times(100);
+      const monthEnd = new Date(year, month + 1, 1);
+      const depositsSoFar = deposits.filter((d) => d.date < monthEnd).reduce((sum, d) => sum.plus(d.amount), ZERO);
+      const netPercentage = net.dividedBy(base.plus(depositsSoFar)).times(100);
       base = base.plus(net);
       return { year, month, gains, losses, fees, income: monthIncome, net, netPercentage };
     });
 
     return months.sort((a, b) => a.year - b.year || a.month - b.month);
-  }, [transactions, expenses, income]);
+  }, [transactions, expenses, income, deposits]);
 
   return { months, loading: loadingTransactions || loadingExpenses || loadingIncome };
 }

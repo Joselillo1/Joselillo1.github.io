@@ -16,6 +16,7 @@ export type RootStackParamList = {
   TransactionForm: { symbol: string; transactionId?: string; initialType?: 'compra' | 'venta' };
   Expenses: undefined;
   ExpenseForm: { expenseId?: string };
+  Capital: undefined;
   Income: undefined;
   IncomeForm: { incomeId?: string };
 };

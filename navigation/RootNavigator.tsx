@@ -6,6 +6,7 @@ import { StockDetailScreen } from '../screens/StockDetailScreen';
 import { TransactionFormScreen } from '../screens/TransactionFormScreen';
 import { ExpensesScreen } from '../screens/ExpensesScreen';
 import { ExpenseFormScreen } from '../screens/ExpenseFormScreen';
+import { CapitalScreen } from '../screens/CapitalScreen';
 import { IncomeScreen } from '../screens/IncomeScreen';
 import { IncomeFormScreen } from '../screens/IncomeFormScreen';
 import { useTheme } from '../components/theme';
@@ -40,6 +41,7 @@ export function RootNavigator() {
         component={ExpenseFormScreen}
         options={{ title: 'Gasto extra', presentation: 'modal' }}
       />
+      <Stack.Screen name="Capital" component={CapitalScreen} options={{ title: 'Capital y aportes' }} />
       <Stack.Screen name="Income" component={IncomeScreen} options={{ title: 'Ingresos' }} />
       <Stack.Screen
         name="IncomeForm"

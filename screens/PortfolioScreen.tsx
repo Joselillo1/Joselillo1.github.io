@@ -11,7 +11,7 @@ import { useIncomeStore } from '../hooks/useIncomeStore';
 import { PositionCard } from '../components/Portfolio/PositionCard';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
 import { formatCurrency } from '../services/format';
-import { INITIAL_CAPITAL } from '../services/investmentConfig';
+import { useCapitalStore } from '../hooks/useCapitalStore';
 import { useTheme } from '../components/theme';
 import { PositionSummary } from '../models/PositionSummary';
 
@@ -38,6 +38,7 @@ export function PortfolioScreen({ navigation }: Props) {
   const { timeline } = useGainsTimeline();
   const { expenses } = useExpensesStore();
   const { income } = useIncomeStore();
+  const { totalCapital } = useCapitalStore();
   const [sortKey, setSortKey] = useState<SortKey>('invertido');
 
   const sorted = useMemo(() => sortPositions(portfolio.positions, sortKey), [portfolio.positions, sortKey]);
@@ -61,8 +62,8 @@ export function PortfolioScreen({ navigation }: Props) {
     .plus(portfolio.totalUnrealizedPnL ?? 0)
     .plus(totalIncome)
     .minus(totalExtraExpenses);
-  // % ganado sobre el capital inicial, con el mismo total neto que se muestra abajo.
-  const pnlNetPercentage = pnlNet.dividedBy(INITIAL_CAPITAL).times(100);
+  // % ganado sobre el capital total (inicial + aportes), con el mismo total neto que se muestra abajo.
+  const pnlNetPercentage = pnlNet.dividedBy(totalCapital).times(100);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>

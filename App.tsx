@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { TransactionsProvider } from './hooks/useTransactionsStore';
 import { ExpensesProvider } from './hooks/useExpensesStore';
+import { CapitalProvider } from './hooks/useCapitalStore';
 import { IncomeProvider } from './hooks/useIncomeStore';
 import { useAuth } from './hooks/useAuth';
 import { useBiometricLock } from './hooks/useBiometricLock';
@@ -25,9 +26,11 @@ function AuthenticatedApp() {
     <TransactionsProvider>
       <ExpensesProvider>
         <IncomeProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
+          <CapitalProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+          </CapitalProvider>
         </IncomeProvider>
       </ExpensesProvider>
     </TransactionsProvider>

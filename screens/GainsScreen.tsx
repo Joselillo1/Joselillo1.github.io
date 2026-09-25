@@ -2,9 +2,10 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Decimal from 'decimal.js';
+import { useTransactionsStore } from '../hooks/useTransactionsStore';
 import { useMonthlyGains } from '../hooks/useMonthlyGains';
 import { GainsBarChart } from '../components/Gains/GainsBarChart';
-import { CurrencyText } from '../components/Shared/CurrencyText';
+import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
 import { formatCurrency, formatMonthYear } from '../services/format';
 import { useTheme } from '../components/theme';
 
@@ -13,10 +14,15 @@ const ZERO = new Decimal(0);
 export function GainsScreen() {
   const theme = useTheme();
   const { months } = useMonthlyGains();
+  const { transactions } = useTransactionsStore();
 
   const current = months[months.length - 1];
   const previous = months[months.length - 2];
   const accumulatedNet = months.reduce((sum, m) => sum.plus(m.net), ZERO);
+  const totalBought = transactions
+    .filter((t) => t.type === 'compra')
+    .reduce((sum, t) => sum.plus(t.quantity.times(t.pricePerShare)).plus(t.fees), ZERO);
+  const accumulatedPct = totalBought.greaterThan(0) ? accumulatedNet.dividedBy(totalBought).times(100) : undefined;
 
   // Del más reciente al más antiguo, como máximo 6 meses en el detalle.
   const detail = [...months].reverse().slice(0, 6);
@@ -46,7 +52,12 @@ export function GainsScreen() {
           </View>
           <View style={[styles.accumRow, { borderColor: 'rgba(127,127,127,0.25)' }]}>
             <Text style={[styles.summaryLabel, { color: theme.textMuted, marginBottom: 0 }]}>Acumulado total</Text>
-            <CurrencyText value={accumulatedNet} signed style={styles.accumValue} />
+            <View style={{ alignItems: 'flex-end' }}>
+              <CurrencyText value={accumulatedNet} signed style={styles.accumValue} />
+              {accumulatedPct !== undefined && (
+                <PercentageText value={accumulatedPct} signed style={styles.monthPct} />
+              )}
+            </View>
           </View>
         </View>
 
@@ -97,7 +108,12 @@ export function GainsScreen() {
             )}
             <View style={[styles.monthRow, styles.monthNetRow, { borderColor: 'rgba(127,127,127,0.25)' }]}>
               <Text style={[styles.monthLabel, { color: theme.text, fontWeight: '700' }]}>Neto</Text>
-              <CurrencyText value={m.net} signed style={styles.monthNetValue} />
+              <View style={{ alignItems: 'flex-end' }}>
+                <CurrencyText value={m.net} signed style={styles.monthNetValue} />
+                {m.netPercentage !== undefined && (
+                  <PercentageText value={m.netPercentage} signed style={styles.monthPct} />
+                )}
+              </View>
             </View>
           </View>
         ))}
@@ -107,6 +123,7 @@ export function GainsScreen() {
 }
 
 const styles = StyleSheet.create({
+  monthPct: { fontSize: 12, fontWeight: '600', marginTop: 2 },
   container: { flex: 1 },
   content: { padding: 16, paddingBottom: 48 },
   title: { fontSize: 28, fontWeight: '800' },

@@ -14,7 +14,7 @@ function monthKey(year: number, month: number): string {
 export interface MonthlyBalance extends MonthlyRealizedPnL {
   /** Ingresos (dividendos, intereses, etc.) recibidos ese mes. */
   income: Decimal;
-  /** Neto del mes ÷ capital máximo invertido hasta el fin de ese mes × 100 (undefined si aún no había compras). */
+  /** Neto del mes ÷ base del mes: lo que ya estaba invertido al cerrar el mes anterior, o el máximo invertido dentro del mes si fue mayor × 100 (undefined si aún no había compras). */
   netPercentage?: Decimal;
 }
 
@@ -76,7 +76,7 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
       const fees = realizedFees.plus(extraExpenses);
       const net = gains.plus(losses).minus(fees).plus(monthIncome);
       const monthEnd = new Date(year, month + 1, 1);
-      const boughtSoFar = computePeakInvested(transactions, monthEnd);
+      const boughtSoFar = computePeakInvested(transactions, monthEnd, new Date(year, month, 1));
       const netPercentage = boughtSoFar.greaterThan(0) ? net.dividedBy(boughtSoFar).times(100) : undefined;
       return { year, month, gains, losses, fees, income: monthIncome, net, netPercentage };
     });

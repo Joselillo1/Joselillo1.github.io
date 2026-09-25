@@ -56,6 +56,11 @@ export function GainsScreen() {
               {accumulatedPct !== undefined && (
                 <PercentageText value={accumulatedPct} signed style={styles.monthPct} />
               )}
+              {totalBought.greaterThan(0) && (
+                <Text style={[styles.monthPct, { color: theme.textMuted, fontWeight: '400' }]}>
+                  sobre {formatCurrency(totalBought)} (máx. invertido)
+                </Text>
+              )}
             </View>
           </View>
         </View>

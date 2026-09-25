@@ -380,3 +380,30 @@ export function computePortfolioSummary(positions: PositionSummary[]): Portfolio
     positions,
   };
 }
+
+/**
+ * Capital máximo que tuviste invertido a la vez (costo de lo que mantenías en cartera),
+ * mirando cada operación en orden cronológico. Es la base del % de rentabilidad: NO suma
+ * todas las compras porque reinvertir el mismo dinero tras una venta lo contaría varias veces.
+ * Con `until` solo considera las operaciones anteriores a esa fecha.
+ */
+export function computePeakInvested(transactions: Transaction[], until?: Date): Decimal {
+  const chronological = [...transactions]
+    .filter((t) => !until || t.date < until)
+    .sort((a, b) => a.date.getTime() - b.date.getTime() || a.createdAt.getTime() - b.createdAt.getTime());
+  let peak = ZERO;
+  for (let i = 1; i <= chronological.length; i += 1) {
+    const bySymbol = new Map<string, Transaction[]>();
+    for (const t of chronological.slice(0, i)) {
+      const list = bySymbol.get(t.tickerSymbol);
+      if (list) list.push(t);
+      else bySymbol.set(t.tickerSymbol, [t]);
+    }
+    let invested = ZERO;
+    for (const [symbol, txs] of bySymbol) {
+      invested = invested.plus(computePositionSummary({ symbol } as StockCatalogItem, txs).currentInvestment);
+    }
+    if (invested.greaterThan(peak)) peak = invested;
+  }
+  return peak;
+}

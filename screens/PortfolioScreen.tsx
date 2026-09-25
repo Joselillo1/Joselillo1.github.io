@@ -11,6 +11,7 @@ import { useIncomeStore } from '../hooks/useIncomeStore';
 import { PositionCard } from '../components/Portfolio/PositionCard';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
 import { formatCurrency } from '../services/format';
+import { computePeakInvested } from '../services/portfolioCalculations';
 import { useTheme } from '../components/theme';
 import { PositionSummary } from '../models/PositionSummary';
 
@@ -33,7 +34,7 @@ function sortPositions(positions: PositionSummary[], key: SortKey): PositionSumm
 export function PortfolioScreen({ navigation }: Props) {
   const theme = useTheme();
   const { portfolio, loading } = usePortfolio();
-  const { refresh } = useTransactionsStore();
+  const { refresh, transactions } = useTransactionsStore();
   const { timeline } = useGainsTimeline();
   const { expenses } = useExpensesStore();
   const { income } = useIncomeStore();
@@ -60,9 +61,10 @@ export function PortfolioScreen({ navigation }: Props) {
     .plus(portfolio.totalUnrealizedPnL ?? 0)
     .plus(totalIncome)
     .minus(totalExtraExpenses);
-  // % ganado sobre lo comprado en total, con el mismo total neto que se muestra abajo.
-  const pnlNetPercentage = portfolio.totalBuysCost.greaterThan(0)
-    ? pnlNet.dividedBy(portfolio.totalBuysCost).times(100)
+  // % ganado sobre el capital máximo invertido (no la suma de todas las compras), con el mismo total neto que se muestra abajo.
+  const peakInvested = computePeakInvested(transactions);
+  const pnlNetPercentage = peakInvested.greaterThan(0)
+    ? pnlNet.dividedBy(peakInvested).times(100)
     : undefined;
 
   return (

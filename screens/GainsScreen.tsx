@@ -6,6 +6,7 @@ import { useTransactionsStore } from '../hooks/useTransactionsStore';
 import { useMonthlyGains } from '../hooks/useMonthlyGains';
 import { GainsBarChart } from '../components/Gains/GainsBarChart';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
+import { computePeakInvested } from '../services/portfolioCalculations';
 import { formatCurrency, formatMonthYear } from '../services/format';
 import { useTheme } from '../components/theme';
 
@@ -19,9 +20,7 @@ export function GainsScreen() {
   const current = months[months.length - 1];
   const previous = months[months.length - 2];
   const accumulatedNet = months.reduce((sum, m) => sum.plus(m.net), ZERO);
-  const totalBought = transactions
-    .filter((t) => t.type === 'compra')
-    .reduce((sum, t) => sum.plus(t.quantity.times(t.pricePerShare)).plus(t.fees), ZERO);
+  const totalBought = computePeakInvested(transactions);
   const accumulatedPct = totalBought.greaterThan(0) ? accumulatedNet.dividedBy(totalBought).times(100) : undefined;
 
   // Del más reciente al más antiguo, como máximo 6 meses en el detalle.

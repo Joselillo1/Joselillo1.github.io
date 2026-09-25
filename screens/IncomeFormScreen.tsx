@@ -60,14 +60,18 @@ export function IncomeFormScreen({ route, navigation }: Props) {
       notes: notes.trim() || undefined,
     };
 
-    const result = isEditing ? await updateIncome(editing.id, input) : await addIncome(input);
-
-    setSubmitting(false);
-    if (!result.valid) {
-      setErrors(result.errors);
-      return;
+    try {
+      const result = isEditing ? await updateIncome(editing.id, input) : await addIncome(input);
+      if (!result.valid) {
+        setErrors(result.errors);
+        return;
+      }
+      navigation.goBack();
+    } catch (error) {
+      setErrors([`No se pudo guardar: ${error instanceof Error ? error.message : 'inténtalo de nuevo.'}`]);
+    } finally {
+      setSubmitting(false);
     }
-    navigation.goBack();
   };
 
   return (

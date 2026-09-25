@@ -7,6 +7,8 @@ import { ValidationResult } from '../services/transactionValidation';
 interface IncomeStore {
   income: IncomeEntry[];
   loading: boolean;
+  /** Mensaje del último fallo al cargar (null si la última carga fue bien). Una falla NO vacía la lista. */
+  loadError: string | null;
   refresh: () => Promise<void>;
   addIncome: (input: IncomeInput) => Promise<ValidationResult>;
   updateIncome: (id: string, input: IncomeInput) => Promise<ValidationResult>;
@@ -23,17 +25,18 @@ const IncomeContext = createContext<IncomeStore | undefined>(undefined);
 export function IncomeProvider({ children }: { children: ReactNode }) {
   const [income, setIncome] = useState<IncomeEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       const all = await incomeRepository.getAll();
       setIncome(all);
+      setLoadError(null);
     } catch (error) {
-      // La tabla `income` es nueva: si todavía no corriste la migración en
-      // Supabase (supabase/add_income_table.sql), no rompemos el resto de la
-      // app — la sección de Ingresos queda vacía hasta que la corras.
-      console.warn('No se pudieron cargar los ingresos (¿falta correr la migración de Supabase?):', error);
-      setIncome([]);
+      // No rompemos el resto de la app si falla (p. ej. falta la migración de
+      // Supabase o no hay red), pero tampoco vaciamos la lista que ya se tenía.
+      console.warn('No se pudieron cargar los ingresos:', error);
+      setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
@@ -71,7 +74,7 @@ export function IncomeProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <IncomeContext.Provider value={{ income, loading, refresh, addIncome, updateIncome, deleteIncome }}>
+    <IncomeContext.Provider value={{ income, loading, loadError, refresh, addIncome, updateIncome, deleteIncome }}>
       {children}
     </IncomeContext.Provider>
   );

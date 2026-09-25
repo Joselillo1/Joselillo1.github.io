@@ -58,14 +58,18 @@ export function ExpenseFormScreen({ route, navigation }: Props) {
       notes: notes.trim() || undefined,
     };
 
-    const result = isEditing ? await updateExpense(editing.id, input) : await addExpense(input);
-
-    setSubmitting(false);
-    if (!result.valid) {
-      setErrors(result.errors);
-      return;
+    try {
+      const result = isEditing ? await updateExpense(editing.id, input) : await addExpense(input);
+      if (!result.valid) {
+        setErrors(result.errors);
+        return;
+      }
+      navigation.goBack();
+    } catch (error) {
+      setErrors([`No se pudo guardar: ${error instanceof Error ? error.message : 'inténtalo de nuevo.'}`]);
+    } finally {
+      setSubmitting(false);
     }
-    navigation.goBack();
   };
 
   return (

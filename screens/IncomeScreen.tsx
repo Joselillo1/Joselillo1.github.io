@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Decimal from 'decimal.js';
 import { RootStackScreenProps } from '../navigation/types';
@@ -16,7 +16,7 @@ const ZERO = new Decimal(0);
 
 export function IncomeScreen({ navigation }: Props) {
   const theme = useTheme();
-  const { income, deleteIncome } = useIncomeStore();
+  const { income, deleteIncome, loadError, refresh } = useIncomeStore();
   const { showActionSheet } = useActionSheet();
 
   const sorted = useMemo(() => [...income].sort((a, b) => b.date.getTime() - a.date.getTime()), [income]);
@@ -60,6 +60,14 @@ export function IncomeScreen({ navigation }: Props) {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
+            {loadError && (
+              <Pressable onPress={refresh} style={[styles.errorBox, { borderColor: theme.negative }]}>
+                <Text style={[styles.errorTitle, { color: theme.negative }]}>No se pudieron cargar los ingresos</Text>
+                <Text style={[styles.errorText, { color: theme.textMuted }]}>
+                  {loadError} — esto no significa que se hayan borrado. Toca para reintentar.
+                </Text>
+              </Pressable>
+            )}
             <Text style={[styles.subtitle, { color: theme.textMuted }]}>
               Dinero recibido que no viene de vender una posición — dividendos, intereses, etc. Suma a tu
               ganancia neta del portafolio.
@@ -97,6 +105,9 @@ export function IncomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   listContent: { padding: 16, paddingBottom: 40 },
+  errorBox: { borderWidth: 1, borderRadius: 12, padding: 12, marginBottom: 14 },
+  errorTitle: { fontSize: 13, fontWeight: '700', marginBottom: 2 },
+  errorText: { fontSize: 12, lineHeight: 17 },
   subtitle: { fontSize: 13, lineHeight: 18, marginBottom: 16 },
   summaryCard: {
     flexDirection: 'row',

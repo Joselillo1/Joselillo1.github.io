@@ -7,6 +7,8 @@ import { ValidationResult } from '../services/transactionValidation';
 interface ExpensesStore {
   expenses: ExpenseEntry[];
   loading: boolean;
+  /** Mensaje del último fallo al cargar (null si la última carga fue bien). Una falla NO vacía la lista. */
+  loadError: string | null;
   refresh: () => Promise<void>;
   addExpense: (input: ExpenseInput) => Promise<ValidationResult>;
   updateExpense: (id: string, input: ExpenseInput) => Promise<ValidationResult>;
@@ -23,17 +25,19 @@ const ExpensesContext = createContext<ExpensesStore | undefined>(undefined);
 export function ExpensesProvider({ children }: { children: ReactNode }) {
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       const all = await expenseRepository.getAll();
       setExpenses(all);
+      setLoadError(null);
     } catch (error) {
-      // La tabla `expenses` es nueva: si todavía no corriste la migración en
-      // Supabase (supabase/add_expenses_table.sql), no rompemos el resto de la
-      // app — la sección de Gastos extra queda vacía hasta que la corras.
-      console.warn('No se pudieron cargar los gastos extra (¿falta correr la migración de Supabase?):', error);
-      setExpenses([]);
+      // No rompemos el resto de la app si falla (p. ej. falta la migración de
+      // Supabase o no hay red), pero tampoco vaciamos la lista que ya se tenía:
+      // una falla de carga no debe parecer que se borraron los gastos.
+      console.warn('No se pudieron cargar los gastos extra:', error);
+      setLoadError(error instanceof Error ? error.message : String(error));
     } finally {
       setLoading(false);
     }
@@ -71,7 +75,7 @@ export function ExpensesProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ExpensesContext.Provider value={{ expenses, loading, refresh, addExpense, updateExpense, deleteExpense }}>
+    <ExpensesContext.Provider value={{ expenses, loading, loadError, refresh, addExpense, updateExpense, deleteExpense }}>
       {children}
     </ExpensesContext.Provider>
   );

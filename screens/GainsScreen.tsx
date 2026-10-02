@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Decimal from 'decimal.js';
 import { useMonthlyGains } from '../hooks/useMonthlyGains';
 import { GainsBarChart } from '../components/Gains/GainsBarChart';
-import { CumulativeReturnChart } from '../components/Gains/CumulativeReturnChart';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
 import { useCapitalStore } from '../hooks/useCapitalStore';
 import { formatCurrency, formatMonthYear } from '../services/format';
@@ -123,9 +122,6 @@ export function GainsScreen() {
           </View>
         )}
 
-        <CumulativeReturnChart months={months.slice(-12)} />
-
-        <View style={{ height: 12 }} />
         <GainsBarChart months={months} />
         <View style={styles.legend}>
           <View style={styles.legendItem}>

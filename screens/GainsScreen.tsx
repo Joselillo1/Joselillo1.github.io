@@ -21,6 +21,7 @@ export function GainsScreen() {
   const current = months[months.length - 1];
   const previous = months[months.length - 2];
   const accumulatedNet = months.reduce((sum, m) => sum.plus(m.net), ZERO);
+  const accumulatedExpenses = months.reduce((sum, m) => sum.plus(m.losses.abs()).plus(m.fees), ZERO);
   const totalBought = totalCapital;
   const accumulatedPct = totalBought.greaterThan(0) ? accumulatedNet.dividedBy(totalBought).times(100) : undefined;
 
@@ -49,6 +50,12 @@ export function GainsScreen() {
               </Text>
               <CurrencyText value={previous?.net ?? ZERO} signed style={styles.summaryValueSmall} />
             </View>
+          </View>
+          <View style={[styles.accumRow, { borderColor: 'rgba(127,127,127,0.25)' }]}>
+            <Text style={[styles.summaryLabel, { color: theme.textMuted, marginBottom: 0 }]}>Total egresos acumulado</Text>
+            <Text style={[styles.monthValue, { color: theme.negative, fontWeight: '700' }]}>
+              −{formatCurrency(accumulatedExpenses)}
+            </Text>
           </View>
           <View style={[styles.accumRow, { borderColor: 'rgba(127,127,127,0.25)' }]}>
             <Text style={[styles.summaryLabel, { color: theme.textMuted, marginBottom: 0 }]}>Acumulado total</Text>
@@ -122,6 +129,14 @@ export function GainsScreen() {
                 <Text style={[styles.monthValue, { color: theme.negative }]}>−{formatCurrency(m.fees)}</Text>
               </View>
             )}
+            {m.losses.lessThan(0) || m.fees.greaterThan(0) ? (
+              <View style={styles.monthRow}>
+                <Text style={[styles.monthLabel, { color: theme.text, fontWeight: '700' }]}>Total egresos</Text>
+                <Text style={[styles.monthValue, { color: theme.negative, fontWeight: '700' }]}>
+                  −{formatCurrency(m.losses.abs().plus(m.fees))}
+                </Text>
+              </View>
+            ) : null}
             <View style={[styles.monthRow, styles.monthNetRow, { borderColor: 'rgba(127,127,127,0.25)' }]}>
               <Text style={[styles.monthLabel, { color: theme.text, fontWeight: '700' }]}>Neto</Text>
               <View style={{ alignItems: 'flex-end' }}>

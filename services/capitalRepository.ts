@@ -53,6 +53,26 @@ export const capitalRepository = {
     if (error) throw error;
   },
 
+  /** Usado solo por el restaurador de respaldos: preserva id y created_at, ignora los que ya existan (idempotente). */
+  async bulkInsert(deposits: CapitalDeposit[]): Promise<void> {
+    if (deposits.length === 0) return;
+    const rows = deposits.map((d) => ({
+      id: d.id,
+      amount: d.amount.toString(),
+      date: toDateOnly(d.date),
+      notes: d.notes ?? null,
+      created_at: d.createdAt.toISOString(),
+    }));
+    const { error } = await supabase.from(TABLE).upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+    if (error) throw error;
+  },
+
+  /** Borra permanentemente todos los aportes DEL USUARIO ACTUAL (RLS limita el alcance). Usado por el borrado seguro en Ajustes. */
+  async deleteAll(): Promise<void> {
+    const { error } = await supabase.from(TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (error) throw error;
+  },
+
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from(TABLE).delete().eq('id', id);
     if (error) throw error;

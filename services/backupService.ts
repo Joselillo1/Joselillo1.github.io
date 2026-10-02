@@ -8,6 +8,8 @@ import { IncomeCategory, IncomeEntry } from '../models/IncomeEntry';
 import { transactionRepository } from './transactionRepository';
 import { expenseRepository } from './expenseRepository';
 import { incomeRepository } from './incomeRepository';
+import { CapitalDeposit } from '../models/CapitalDeposit';
+import { capitalRepository } from './capitalRepository';
 
 async function writeAndShare(fileName: string, contents: string, mimeType: string): Promise<string> {
   const file = new File(Paths.document, fileName);
@@ -25,15 +27,17 @@ function csvEscape(value: string): string {
 }
 
 export const backupService = {
-  /** Exporta transacciones + gastos extra + ingresos a un JSON completo (id, montos y fechas incluidos) y ofrece compartirlo/guardarlo. */
+  /** Exporta transacciones + gastos extra + ingresos + aportes de capital a un JSON completo (id, montos y fechas incluidos) y ofrece compartirlo/guardarlo. */
   async exportJSON(): Promise<string> {
-    const [transactions, expenses, income] = await Promise.all([
+    const [transactions, expenses, income, capitalDeposits] = await Promise.all([
       transactionRepository.getAll(),
       expenseRepository.getAll(),
       incomeRepository.getAll(),
+      // Si la tabla de aportes aún no existe en Supabase, el respaldo sigue sin ella.
+      capitalRepository.getAll().catch(() => [] as CapitalDeposit[]),
     ]);
     const payload = {
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
       transactions: transactions.map((t) => ({
         id: t.id,
@@ -65,6 +69,13 @@ export const backupService = {
         notes: i.notes ?? null,
         createdAt: i.createdAt.toISOString(),
       })),
+      capitalDeposits: capitalDeposits.map((d) => ({
+        id: d.id,
+        amount: d.amount.toString(),
+        date: d.date.toISOString(),
+        notes: d.notes ?? null,
+        createdAt: d.createdAt.toISOString(),
+      })),
     };
     return writeAndShare(
       `respaldo-inversiones-${Date.now()}.json`,
@@ -93,7 +104,7 @@ export const backupService = {
     return writeAndShare(`respaldo-inversiones-${Date.now()}.csv`, [header, ...rows].join('\n'), 'text/csv');
   },
 
-  /** Abre el selector de archivos, lee un respaldo JSON y restaura transacciones + gastos extra (ignora lo que ya exista por id). */
+  /** Abre el selector de archivos, lee un respaldo JSON y restaura transacciones + gastos extra + ingresos + aportes (ignora lo que ya exista por id). */
   async importJSON(): Promise<number> {
     const pick = await DocumentPicker.getDocumentAsync({
       type: ['application/json', 'text/plain', '*/*'],
@@ -152,11 +163,27 @@ export const backupService = {
     }));
     if (income.length > 0) await incomeRepository.bulkInsert(income);
 
-    return transactions.length + expenses.length + income.length;
+    // Respaldos anteriores a la versión 4 no tienen `capitalDeposits`.
+    const rawDeposits = Array.isArray(payload.capitalDeposits) ? payload.capitalDeposits : [];
+    const deposits: CapitalDeposit[] = rawDeposits.map((raw: Record<string, unknown>) => ({
+      id: String(raw.id),
+      amount: new Decimal(String(raw.amount)),
+      date: new Date(String(raw.date)),
+      notes: raw.notes ? String(raw.notes) : undefined,
+      createdAt: new Date(String(raw.createdAt ?? raw.date)),
+    }));
+    if (deposits.length > 0) await capitalRepository.bulkInsert(deposits);
+
+    return transactions.length + expenses.length + income.length + deposits.length;
   },
 
-  /** Borrado seguro: elimina permanentemente todas las transacciones, gastos extra E ingresos guardados en el dispositivo. */
+  /** Borrado seguro: elimina permanentemente todas las transacciones, gastos extra, ingresos Y aportes de capital. */
   async wipeAllData(): Promise<void> {
-    await Promise.all([transactionRepository.deleteAll(), expenseRepository.deleteAll(), incomeRepository.deleteAll()]);
+    await Promise.all([
+      transactionRepository.deleteAll(),
+      expenseRepository.deleteAll(),
+      incomeRepository.deleteAll(),
+      capitalRepository.deleteAll().catch(() => undefined),
+    ]);
   },
 };

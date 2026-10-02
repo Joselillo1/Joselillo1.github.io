@@ -7,7 +7,7 @@ import { useIncomeStore } from '../hooks/useIncomeStore';
 import { useActionSheet } from '../components/Shared/ActionSheet';
 import { IncomeListItem } from '../components/Income/IncomeListItem';
 import { PrimaryButton } from '../components/Shared/Buttons';
-import { formatCurrency } from '../services/format';
+import { formatCurrency, formatMonthYear } from '../services/format';
 import { useTheme } from '../components/theme';
 
 type Props = RootStackScreenProps<'Income'>;
@@ -27,6 +27,32 @@ export function IncomeScreen({ navigation }: Props) {
     return income
       .filter((i) => i.date.getFullYear() === now.getFullYear() && i.date.getMonth() === now.getMonth())
       .reduce((sum, i) => sum.plus(i.amount), ZERO);
+  }, [income]);
+
+  // Ingresos agrupados por mes (los 6 más recientes) y por acción (ticker; sin ticker van en "Sin ticker").
+  const byMonth = useMemo(() => {
+    const map = new Map<string, { year: number; month: number; total: Decimal }>();
+    for (const i of income) {
+      const year = i.date.getFullYear();
+      const month = i.date.getMonth();
+      const key = `${year}-${String(month).padStart(2, '0')}`;
+      const entry = map.get(key) ?? { year, month, total: ZERO };
+      entry.total = entry.total.plus(i.amount);
+      map.set(key, entry);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 6)
+      .map(([, v]) => v);
+  }, [income]);
+
+  const bySymbol = useMemo(() => {
+    const map = new Map<string, Decimal>();
+    for (const i of income) {
+      const symbol = i.symbol ?? 'Sin ticker';
+      map.set(symbol, (map.get(symbol) ?? ZERO).plus(i.amount));
+    }
+    return Array.from(map.entries()).sort(([, a], [, b]) => b.comparedTo(a));
   }, [income]);
 
   const confirmDelete = (id: string) => {
@@ -86,6 +112,25 @@ export function IncomeScreen({ navigation }: Props) {
               </View>
             </View>
 
+            {byMonth.length > 0 && (
+              <View style={[styles.summaryCard, { backgroundColor: theme.card, borderColor: theme.border, flexDirection: 'column', gap: 6 }]}>
+                <Text style={[styles.groupTitle, { color: theme.textMuted }]}>Por mes</Text>
+                {byMonth.map((m) => (
+                  <View key={`${m.year}-${m.month}`} style={styles.groupRow}>
+                    <Text style={{ color: theme.text }}>{formatMonthYear(m.year, m.month)}</Text>
+                    <Text style={{ color: theme.positive, fontWeight: '700' }}>+{formatCurrency(m.total)}</Text>
+                  </View>
+                ))}
+                <Text style={[styles.groupTitle, { color: theme.textMuted, marginTop: 8 }]}>Por acción</Text>
+                {bySymbol.map(([symbol, total]) => (
+                  <View key={symbol} style={styles.groupRow}>
+                    <Text style={{ color: theme.text }}>{symbol}</Text>
+                    <Text style={{ color: theme.positive, fontWeight: '700' }}>+{formatCurrency(total)}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
             <PrimaryButton label="+ Agregar ingreso" onPress={() => navigation.navigate('IncomeForm', {})} />
           </>
         }
@@ -117,6 +162,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
+  groupTitle: { fontSize: 12, fontWeight: '600' },
+  groupRow: { flexDirection: 'row', justifyContent: 'space-between' },
   summaryLabel: { fontSize: 12, marginBottom: 4 },
   summaryValue: { fontSize: 24, fontWeight: '800' },
   summaryValueSmall: { fontSize: 18, fontWeight: '700' },

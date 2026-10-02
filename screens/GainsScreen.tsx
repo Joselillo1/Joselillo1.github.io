@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Decimal from 'decimal.js';
 import { useMonthlyGains } from '../hooks/useMonthlyGains';
 import { GainsBarChart } from '../components/Gains/GainsBarChart';
+import { CumulativeReturnChart } from '../components/Gains/CumulativeReturnChart';
 import { CurrencyText, PercentageText } from '../components/Shared/CurrencyText';
 import { useCapitalStore } from '../hooks/useCapitalStore';
 import { formatCurrency, formatMonthYear } from '../services/format';
@@ -24,6 +25,18 @@ export function GainsScreen() {
   const accumulatedExpenses = months.reduce((sum, m) => sum.plus(m.losses.abs()).plus(m.fees), ZERO);
   const totalBought = totalCapital;
   const accumulatedPct = totalBought.greaterThan(0) ? accumulatedNet.dividedBy(totalBought).times(100) : undefined;
+
+  // Estadísticas sobre los meses con actividad (neto distinto de 0): mejor, peor y % de meses en positivo.
+  const activeMonths = months.filter((m) => !m.net.isZero());
+  const bestMonth = activeMonths.reduce<typeof activeMonths[number] | undefined>(
+    (best, m) => (!best || m.net.greaterThan(best.net) ? m : best),
+    undefined
+  );
+  const worstMonth = activeMonths.reduce<typeof activeMonths[number] | undefined>(
+    (worst, m) => (!worst || m.net.lessThan(worst.net) ? m : worst),
+    undefined
+  );
+  const positiveMonths = activeMonths.filter((m) => m.net.greaterThan(0)).length;
 
   // Del más reciente al más antiguo, como máximo 6 meses en el detalle.
   const detail = [...months].reverse().slice(0, 6);
@@ -79,6 +92,40 @@ export function GainsScreen() {
           </Text>
         </Pressable>
 
+        {activeMonths.length > 0 && bestMonth && worstMonth && (
+          <View style={[styles.statsCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View style={styles.statsRow}>
+              <Text style={[styles.statsLabel, { color: theme.textMuted }]}>Mejor mes</Text>
+              <Text style={[styles.monthValue, { color: theme.text }]}>
+                {formatMonthYear(bestMonth.year, bestMonth.month)}{'  '}
+                <Text style={{ color: bestMonth.net.isNegative() ? theme.negative : theme.positive, fontWeight: '700' }}>
+                  {bestMonth.net.greaterThan(0) ? '+' : ''}{formatCurrency(bestMonth.net)}
+                </Text>
+              </Text>
+            </View>
+            {activeMonths.length > 1 && (
+              <View style={styles.statsRow}>
+                <Text style={[styles.statsLabel, { color: theme.textMuted }]}>Peor mes</Text>
+                <Text style={[styles.monthValue, { color: theme.text }]}>
+                  {formatMonthYear(worstMonth.year, worstMonth.month)}{'  '}
+                  <Text style={{ color: worstMonth.net.isNegative() ? theme.negative : theme.positive, fontWeight: '700' }}>
+                    {worstMonth.net.greaterThan(0) ? '+' : ''}{formatCurrency(worstMonth.net)}
+                  </Text>
+                </Text>
+              </View>
+            )}
+            <View style={styles.statsRow}>
+              <Text style={[styles.statsLabel, { color: theme.textMuted }]}>Meses en positivo</Text>
+              <Text style={[styles.monthValue, { color: theme.text, fontWeight: '700' }]}>
+                {positiveMonths} de {activeMonths.length} ({Math.round((positiveMonths / activeMonths.length) * 100)}%)
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <CumulativeReturnChart months={months.slice(-12)} />
+
+        <View style={{ height: 12 }} />
         <GainsBarChart months={months} />
         <View style={styles.legend}>
           <View style={styles.legendItem}>
@@ -146,6 +193,17 @@ export function GainsScreen() {
                 )}
               </View>
             </View>
+            {m.contributions.length > 0 && (
+              <View style={[styles.contribBlock, { borderColor: 'rgba(127,127,127,0.25)' }]}>
+                <Text style={[styles.contribTitle, { color: theme.textMuted }]}>Aporte por acción (neto)</Text>
+                {m.contributions.map((c) => (
+                  <View key={c.symbol} style={styles.monthRow}>
+                    <Text style={[styles.monthLabel, { color: theme.text }]}>{c.symbol}</Text>
+                    <CurrencyText value={c.total} signed style={styles.monthValue} />
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -174,6 +232,11 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  statsCard: { borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 12, gap: 8 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  statsLabel: { fontSize: 13 },
+  contribBlock: { marginTop: 10, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, gap: 4 },
+  contribTitle: { fontSize: 12, fontWeight: '600', marginBottom: 2 },
   totalLine: { marginTop: 4, paddingTop: 8, borderTopWidth: 1 },
   accumValue: { fontSize: 15, fontWeight: '700' },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 10, marginBottom: 4 },

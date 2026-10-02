@@ -10,6 +10,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTransactionsStore } from '../hooks/useTransactionsStore';
 import { useExpensesStore } from '../hooks/useExpensesStore';
 import { useIncomeStore } from '../hooks/useIncomeStore';
+import { useCapitalStore } from '../hooks/useCapitalStore';
 import { useTheme } from '../components/theme';
 import { PrimaryButton, SecondaryButton, DangerButton } from '../components/Shared/Buttons';
 import { useActionSheet } from '../components/Shared/ActionSheet';
@@ -31,6 +32,7 @@ export function SettingsScreen({}: Props) {
   const { transactions, refresh } = useTransactionsStore();
   const { refresh: refreshExpenses } = useExpensesStore();
   const { refresh: refreshIncome } = useIncomeStore();
+  const { refresh: refreshCapital } = useCapitalStore();
   const { showActionSheet, showAlert } = useActionSheet();
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [gracePeriodMs, setGracePeriodMs] = useState<number>(5 * 60_000);
@@ -77,9 +79,9 @@ export function SettingsScreen({}: Props) {
 
   const onImport = () => withBusy(async () => {
     const count = await backupService.importJSON();
-    await Promise.all([refresh(), refreshExpenses(), refreshIncome()]);
+    await Promise.all([refresh(), refreshExpenses(), refreshIncome(), refreshCapital()]);
     if (count > 0) {
-      showAlert('Respaldo importado', `Se importaron ${count} registros nuevos (transacciones, gastos e ingresos).`);
+      showAlert('Respaldo importado', `Se importaron ${count} registros nuevos (transacciones, gastos, ingresos y aportes).`);
     }
   });
 
@@ -128,7 +130,7 @@ export function SettingsScreen({}: Props) {
   const onWipeAll = () => {
     showActionSheet({
       title: 'Borrar todos los datos',
-      message: 'Esto eliminará permanentemente todas tus transacciones de este dispositivo. No se puede deshacer.',
+      message: 'Esto eliminará permanentemente todas tus transacciones, gastos extra, ingresos y aportes de capital. No se puede deshacer.',
       options: [
         {
           label: 'Continuar',
@@ -144,7 +146,7 @@ export function SettingsScreen({}: Props) {
                   onPress: () =>
                     withBusy(async () => {
                       await backupService.wipeAllData();
-                      await Promise.all([refresh(), refreshExpenses(), refreshIncome()]);
+                      await Promise.all([refresh(), refreshExpenses(), refreshIncome(), refreshCapital()]);
                     }),
                 },
                 { label: 'Cancelar', style: 'cancel' },

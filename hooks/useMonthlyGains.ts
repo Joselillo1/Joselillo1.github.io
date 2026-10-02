@@ -18,6 +18,8 @@ export interface MonthlyBalance extends MonthlyRealizedPnL {
   income: Decimal;
   /** Neto del mes ÷ (capital inicial + aportes hasta ese mes + neto acumulado de los meses anteriores) × 100. */
   netPercentage?: Decimal;
+  /** Ganancia bruta del mes ÷ la misma base que `netPercentage`. */
+  gainsPercentage?: Decimal;
 }
 
 /**
@@ -82,9 +84,11 @@ export function useMonthlyGains(): { months: MonthlyBalance[]; loading: boolean 
       const net = gains.plus(losses).minus(fees).plus(monthIncome);
       const monthEnd = new Date(year, month + 1, 1);
       const depositsSoFar = deposits.filter((d) => d.date < monthEnd).reduce((sum, d) => sum.plus(d.amount), ZERO);
-      const netPercentage = net.dividedBy(base.plus(depositsSoFar)).times(100);
+      const monthBase = base.plus(depositsSoFar);
+      const netPercentage = net.dividedBy(monthBase).times(100);
+      const gainsPercentage = gains.dividedBy(monthBase).times(100);
       base = base.plus(net);
-      return { year, month, gains, losses, fees, income: monthIncome, net, netPercentage };
+      return { year, month, gains, losses, fees, income: monthIncome, net, netPercentage, gainsPercentage };
     });
 
     return months.sort((a, b) => a.year - b.year || a.month - b.month);

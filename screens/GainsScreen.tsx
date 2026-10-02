@@ -95,7 +95,12 @@ export function GainsScreen() {
             <Text style={[styles.monthTitle, { color: theme.text }]}>{formatMonthYear(m.year, m.month)}</Text>
             <View style={styles.monthRow}>
               <Text style={[styles.monthLabel, { color: theme.textMuted }]}>Ganancia</Text>
-              <CurrencyText value={m.gains} signed style={styles.monthValue} />
+              <View style={{ alignItems: 'flex-end' }}>
+                <CurrencyText value={m.gains} signed style={styles.monthValue} />
+                {m.gainsPercentage !== undefined && (
+                  <PercentageText value={m.gainsPercentage} signed style={styles.monthPct} />
+                )}
+              </View>
             </View>
             <View style={styles.monthRow}>
               <Text style={[styles.monthLabel, { color: theme.textMuted }]}>Pérdida</Text>

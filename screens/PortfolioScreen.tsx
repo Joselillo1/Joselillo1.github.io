@@ -63,6 +63,7 @@ export function PortfolioScreen({ navigation }: Props) {
     .plus(totalIncome)
     .minus(totalExtraExpenses);
   // % ganado sobre el capital total (inicial + aportes), con el mismo total neto que se muestra abajo.
+  const pnlGainsPercentage = pnlGains.dividedBy(totalCapital).times(100);
   const pnlNetPercentage = pnlNet.dividedBy(totalCapital).times(100);
 
   return (
@@ -83,7 +84,10 @@ export function PortfolioScreen({ navigation }: Props) {
               <View style={styles.pnlBlock}>
                 <View style={styles.pnlLine}>
                   <Text style={[styles.summaryLabel, { color: theme.textMuted, marginBottom: 0 }]}>Ganancias</Text>
-                  <Text style={[styles.pnlValue, { color: theme.positive }]}>+{formatCurrency(pnlGains)}</Text>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={[styles.pnlValue, { color: theme.positive }]}>+{formatCurrency(pnlGains)}</Text>
+                    <PercentageText value={pnlGainsPercentage} signed style={styles.pnlPct} />
+                  </View>
                 </View>
                 {pnlLosses.lessThan(0) && (
                   <View style={styles.pnlLine}>
@@ -224,6 +228,7 @@ const styles = StyleSheet.create({
     paddingTop: 9,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  pnlPct: { fontSize: 11, fontWeight: '600', opacity: 0.85 },
   pnlTotalLabel: { fontSize: 13, fontWeight: '800' },
   pnlTotalValue: { fontSize: 18, fontWeight: '800' },
   sortRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },

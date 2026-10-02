@@ -130,7 +130,7 @@ export function GainsScreen() {
               </View>
             )}
             {m.losses.lessThan(0) || m.fees.greaterThan(0) ? (
-              <View style={styles.monthRow}>
+              <View style={[styles.monthRow, styles.totalLine, { borderColor: 'rgba(127,127,127,0.45)' }]}>
                 <Text style={[styles.monthLabel, { color: theme.text, fontWeight: '700' }]}>Total egresos</Text>
                 <Text style={[styles.monthValue, { color: theme.negative, fontWeight: '700' }]}>
                   −{formatCurrency(m.losses.abs().plus(m.fees))}
@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  totalLine: { marginTop: 4, paddingTop: 8, borderTopWidth: 1 },
   accumValue: { fontSize: 15, fontWeight: '700' },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 10, marginBottom: 4 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
